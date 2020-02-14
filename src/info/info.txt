@@ -1,3 +1,5 @@
+目的：
+カッコつきで読みづらいので読めるようなアプリを作る
 
 法令名一覧取得 API
 https://elaws.e-gov.go.jp/api/{Version}/lawlists/{法令種別}

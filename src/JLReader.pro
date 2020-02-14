@@ -55,6 +55,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 DISTFILES += \
     info/info.txt \
     xmlsample/340AC0000000033_20190701_431AC0000000006.xml \
+    xmlsample/421AC0000000066_20170401_427AC0000000059.xml \
     xmlsample/ichiran.xml \
-    xmlsample/info \
+    xmlsample/info.txt \
     xmlsample/sample01.xml
