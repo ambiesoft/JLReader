@@ -16,11 +16,33 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    ../../lsMisc/stdQt/stdQt.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
-    mainwindow.h
+    ../../lsMisc/stdQt/stdQt.h \
+    mainwindow.h \
+    stdafx.h
+
+win32 {
+    HEADERS += \
+            ../../lsMisc/GetLastErrorString.h
+    SOURCES += ../../lsMisc/stdQt/stdQt_win32.cpp \
+            ../../lsMisc/GetLastErrorString.cpp
+
+    win32-g++ {
+        message("win32-g++")
+        LIBS += -lshlwapi -lPsapi
+    }
+    win32-msvc* {
+        message("win32-msvc*")
+        LIBS += User32.lib
+    }
+}
+linux {
+    SOURCES += ../../lsMisc/stdQt/stdQt_linux.cpp
+}
 
 FORMS += \
     mainwindow.ui
@@ -32,5 +54,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 DISTFILES += \
     info/info.txt \
+    xmlsample/340AC0000000033_20190701_431AC0000000006.xml \
     xmlsample/ichiran.xml \
-    xmlsample/info
+    xmlsample/info \
+    xmlsample/sample01.xml

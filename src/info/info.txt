@@ -1,6 +1,7 @@
 
 法令名一覧取得 API
 https://elaws.e-gov.go.jp/api/{Version}/lawlists/{法令種別}
+-> ichiran.xml
 
 法令取得 API
 https://elaws.e-gov.go.jp/api/{Version}/lawdata/{法令番号}
