@@ -18,6 +18,8 @@ public:
 private slots:
     void on_action_Test_triggered();
 
+    void on_action_PasteArticle_triggered();
+
 private:
     Ui::MainWindow *ui;
 };
