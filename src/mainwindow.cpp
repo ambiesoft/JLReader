@@ -1,15 +1,19 @@
-#include <string>
+﻿#include <string>
+#include <regex>
+#include <sstream>
 
 #include <QDir>
 #include <QtXML>
 #include <QClipboard>
 
 #include "../../lsMisc/stdQt/stdQt.h"
+#include "../../lsMisc/stdosd/stdosd.h"
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
 using namespace AmbiesoftQt;
+using namespace Ambiesoft::stdosd;
 using namespace std;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -56,7 +60,7 @@ void MainWindow::on_action_Test_triggered()
     Info(this,title);
 }
 
-int getCorrespodentKaishi(const wstring& text, const size_t maxindex)
+size_t getCorrespodentKaishi(const wstring& text, const size_t maxindex)
 {
     size_t found = wstring::npos;
     size_t kaishi = 0;
@@ -77,38 +81,131 @@ wstring getPostu(int count)
     ret = L"[" + to_wstring(count) + L"]";
     return ret;
 }
+
+void getSeparatorString(const wstring& text, wstring* begin, wstring* end)
+{
+    wstring retBegin(L"[");
+    wstring retEnd(L"]");
+    do
+    {
+        if(wstring::npos == text.find(retBegin) &&
+                wstring::npos == text.find(retEnd))
+        {
+            *begin=retBegin;
+            *end=retEnd;
+            return;
+        }
+        retBegin += L"[";
+        retEnd += L"]";
+    } while(true);
+    Q_ASSERT(false);
+}
+
+//std::wstring regex_replace(
+//    const std::wstring& input,
+//    const std::wregex& regex,
+//    std::function<std::wstring(std::wsmatch const& match)> format)
+//{
+//    std::wostringstream output;
+//    std::wsregex_iterator begin(input.begin(), input.end(), regex), end;
+//    wsregex_iterator::difference_type lastPos = 0;
+//    for(; begin != end; begin++)
+//    {
+//        output << begin->prefix() << format(*begin);
+//        qDebug() << output.str();
+//        lastPos = begin->position() + begin->length();
+//    }
+//    // output << input.substr(input.size() - begin->position());
+//    output << input.substr(lastPos);
+//    qDebug() << output.str();
+//    return output.str();
+//}
+
 void MainWindow::on_action_PasteArticle_triggered()
 {
     wstring text = QApplication::clipboard()->text().replace("\r","").replace("\n","").toStdWString();
     // wstring text = L"aaa（bbb（yyy）zzz）ccc";
+    // wstring text = L"aaa（zzz）ccc（yyy）ttt";
     wstring prevtext;
     map<int,wstring> kakkos;
+
+    wstring separatorBegin,separatorEnd;
+    getSeparatorString(text, &separatorBegin, &separatorEnd);
 
     int maxkakkokaishi = count(text.begin(),text.end(),L'）');
     int maxkakkotoji = count(text.begin(),text.end(),L'）');
     if(maxkakkokaishi==maxkakkotoji)
     {
-        int potsuIndex = maxkakkotoji;
+        int potsuIndex = 1;
         do {
             prevtext = text;
-            size_t toji = text.find_first_of(L'）');
+
+            // find inner-most toji
+            size_t toji = text.find(L'）');
             if(toji != wstring::npos)
             {
+                // find correspond kaishi
                 size_t kaishi = getCorrespodentKaishi(text, toji);
                 Q_ASSERT(kaishi < toji);
                 if(kaishi != wstring::npos)
                 {
-                    wstring potsu = getPostu(potsuIndex);
+                    // wstring potsu = getPostu(potsuIndex);
+                    // extract kakko
                     wstring kakko = text.substr(kaishi+1, toji-kaishi-1);
                     kakkos[potsuIndex]=kakko;
-                    --potsuIndex;
 
-                    text = text.substr(0, kaishi) + potsu + text.substr(toji+1);
+                    // put separator at the position of kakko
+                    text = text.substr(0, kaishi) +
+                            (separatorBegin + to_wstring(potsuIndex) + separatorEnd) +
+                            text.substr(toji+1);
+                    ++potsuIndex;
                 }
             }
         } while(prevtext != text);
 
     }
+
+    int writeIndex=1;
+
+    function<wstring(const wsmatch & match)> func = [&](const wsmatch& match) {
+        wstring s = match.str();
+        s = s.substr(1, s.length()-1);
+        int previ = stoi(s);
+        int newi = writeIndex++;
+        {
+            wstring prevs= wstring(L"[") + to_wstring(previ) + L"]";
+            wstring news= wstring(L"[[") + to_wstring(newi) + L"]]";
+            for(int i=1 ; ; ++i)
+            {
+                if(kakkos.end() == kakkos.find(i))
+                    break;
+                kakkos[i] = stdStringReplace(kakkos[i], prevs, news);
+            }
+        }
+        {
+            wstring prevs= wstring(L"[") + to_wstring(newi) + L"]";
+            wstring news= wstring(L"[[") + to_wstring(previ) + L"]]";
+            for(int i=1 ; ; ++i)
+            {
+                if(kakkos.end() == kakkos.find(i))
+                    break;
+                kakkos[i] = stdStringReplace(kakkos[i], prevs, news);
+            }
+        }
+        {
+            for(int i=1 ; ; ++i)
+            {
+                if(kakkos.end() == kakkos.find(i))
+                    break;
+                kakkos[i] = stdStringReplace(kakkos[i], L"[[", L"[");
+                kakkos[i] = stdStringReplace(kakkos[i], L"]]", L"]");
+            }
+        }
+        swap(kakkos[previ], kakkos[newi]);
+        return wstring(L"[") + to_wstring(newi) + L"]";
+    };
+
+    text = stdRegexReplace(text, wregex(L"\\[\\d+\\]"), func);
     QString uiText;
     uiText += QString::fromStdWString(text);
     uiText += "<br/><br/>";

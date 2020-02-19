@@ -18,18 +18,24 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     ../../lsMisc/stdQt/stdQt.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    ../../lsMisc/stdosd/stdosd.cpp \
+
 
 HEADERS += \
     ../../lsMisc/stdQt/stdQt.h \
     mainwindow.h \
-    stdafx.h
+    stdafx.h \
+    ../../lsMisc/stdosd/stdosd.h \
+    ../../lsMisc/stdosd/stdosd_literal.h \
+    stable.h
 
 win32 {
     HEADERS += \
             ../../lsMisc/GetLastErrorString.h
     SOURCES += ../../lsMisc/stdQt/stdQt_win32.cpp \
-            ../../lsMisc/GetLastErrorString.cpp
+            ../../lsMisc/GetLastErrorString.cpp \
+            ../../lsMisc/stdosd/stdosd_win.cpp
 
     win32-g++ {
         message("win32-g++")
@@ -37,12 +43,16 @@ win32 {
     }
     win32-msvc* {
         message("win32-msvc*")
-        LIBS += User32.lib
+        LIBS += User32.lib shlwapi.lib
     }
 }
 linux {
-    SOURCES += ../../lsMisc/stdQt/stdQt_linux.cpp
+    SOURCES += ../../lsMisc/stdQt/stdQt_linux.cpp \
+                ../../lsMisc/stdosd/stdosd_linux.cpp \
+
 }
+
+PRECOMPILED_HEADER = stable.h
 
 FORMS += \
     mainwindow.ui
