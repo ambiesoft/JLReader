@@ -139,11 +139,215 @@ int getNumber(const wstring& s)
     }
     return  stoi(ns);
 }
+
+const wchar_t* pKansuji = L"〇一二三四五六七八九十百千万億兆京";
+wstring getKansujiRegexString()
+{
+    wstring ret;
+    ret += L"[";
+    for(const wchar_t* p = pKansuji; *p ; ++p)
+    {
+        ret += *p;
+        ret += L"|";
+    }
+    ret = stdTrimEnd(ret, L"|");
+    ret += L"]";
+    return ret;
+}
+wregex getNengoRegex()
+{
+    wstring ret;
+
+    ret += L"((明治)|(大正)|(昭和)|(平成))";
+    ret += L"((";
+
+    ret += getKansujiRegexString();
+
+    ret += L")+)年";
+
+    return wregex(ret);
+}
+
+int getNumFromKansuji(const wstring& kansuji)
+{
+    struct Remnant {
+        wstring num_;
+        bool juu=false;
+        bool hyaku=false;
+        bool sen=false;
+        bool man=false;
+        bool oku=false;
+        bool tyou=false;
+        bool kei=false;
+        void clear() {
+            juu=hyaku=sen=man=oku=tyou=kei=false;
+        }
+
+        wstring getNum(wchar_t c) {
+            wstring ret;
+            switch(c)
+            {
+            case L'〇': ret+=L"0"; break;
+            case L'一': ret+=L"1"; break;
+            case L'二': ret+=L"2"; break;
+            case L'三': ret+=L"3"; break;
+            case L'四': ret+=L"4"; break;
+            case L'五': ret+=L"5"; break;
+            case L'六': ret+=L"6"; break;
+            case L'七': ret+=L"7"; break;
+            case L'八': ret+=L"8"; break;
+            case L'九': ret+=L"9"; break;
+//            case L'十': num+=L"1"; juu=true; break;
+//            case L'百': num+=L"1"; hyaku=true; break;
+//            case L'千': num+=L"1"; sen=true; break;
+//            case L'万': num+=L"1"; man=true; break;
+//            case L'億': num+=L"1"; oku=true; break;
+//            case L'兆': num+=L"1"; tyou=true; break;
+//            case L'京': num+=L"1"; kei=true; break;
+            }
+            return ret;
+        }
+
+        bool isSuuji(wchar_t c) {
+            switch(c)
+            {
+            case L'〇': return true;
+            case L'一': return true;
+            case L'二': return true;
+            case L'三': return true;
+            case L'四': return true;
+            case L'五': return true;
+            case L'六': return true;
+            case L'七': return true;
+            case L'八': return true;
+            case L'九': return true;
+            }
+            return false;
+        }
+        wstring addZero(wchar_t c) {
+            wstring ret;
+            switch(c)
+            {
+            case L'十': ret+=L"0"; break;
+            case L'百': ret+=L"00"; break;
+            case L'千': ret+=L"000"; break;
+            case L'万': ret+=L"0000"; break;
+            case L'億': ret+=L"000000000"; break;
+            case L'兆': ret+=L"0000000000000"; break;
+            case L'京': ret+=L"00000000000000000"; break;
+            default:
+                Q_ASSERT(false);
+            }
+            return ret;
+        }
+        void parse(const wstring& t) {
+            wchar_t last = 0;
+            for(wchar_t c : t)
+            {
+                last = c;
+                if(num_.empty()) {
+                    if(!isSuuji(c))
+                    {
+                        num_ += L"1";
+                        continue;
+                    }
+                }
+                num_ += getNum(c);
+            }
+            if(last && !isSuuji(last))
+            {
+                num_ += addZero(last);
+            }
+        }
+
+        int value() {
+            num_ = stdTrimStart(num_, L"0");
+            return stoi(num_);
+        }
+    } rem;
+
+    rem.parse(kansuji);
+    return rem.value();
+}
+wstring getADFromNengo(const wstring& nengo, const wstring& kansuji)
+{
+    int baseyear;
+    if(nengo==L"明治")
+        baseyear = 1867;
+    else if(nengo==L"大正")
+        baseyear = 1911;
+    else if(nengo==L"昭和")
+        baseyear = 1925;
+    else if(nengo==L"平成")
+        baseyear = 1988;
+    else if(nengo==L"令和")
+        baseyear = 2018;
+    else
+    {
+        Q_ASSERT(false);
+        return wstring();
+    }
+
+    int year = getNumFromKansuji(kansuji);
+    return to_wstring(baseyear + year);
+}
+wstring getADedText(const wstring& text)
+{
+    // ((昭和)|(平成))([xxx])+年
+    function<wstring(const wsmatch & match)> func = [&](const wsmatch& match) {
+        wstring nengo = match[1];
+        wstring kansuji = match[6];
+
+        return getADFromNengo(nengo, kansuji) + L"年";
+    };
+    return stdRegexReplace(text, getNengoRegex(), func);
+}
+
+wregex getJoRegex()
+{
+    wstring t;
+    t += L"第(";
+    t += getKansujiRegexString();
+    t += L"+)条";
+
+    return wregex(t);
+}
+wstring getJoToNumText(const wstring& text)
+{
+    function<wstring(const wsmatch & match)> func = [&](const wsmatch& match) {
+        wstring kansuji = match[1];
+
+        return L"第" + to_wstring(getNumFromKansuji(kansuji)) + L"条";
+    };
+    return stdRegexReplace(text, getJoRegex(), func);
+}
 void MainWindow::on_action_PasteArticle_triggered()
 {
-    wstring text = QApplication::clipboard()->text().replace("\r","").replace("\n","").toStdWString();
+    QString clipText = QApplication::clipboard()->text().replace("\r","").replace("\n","");
+    ui->textEdit_Original->setText(clipText);
+
+    doPaste(clipText);
+}
+wstring MainWindow::modifyLawText(const wstring& text)
+{
+    wstring ret(text);
+    if(ui->action_AD->isChecked())
+        ret = getADedText(ret);
+    if(ui->action_Jo_To_Num->isChecked())
+        ret = getJoToNumText(ret);
+
+    return ret;
+}
+void MainWindow::doPaste(const QString& originalText)
+{
+    wstring text = originalText.toStdWString();
     // wstring text = L"aaa（bbb（yyy）zzz）ccc";
     // wstring text = L"aaa（zzz）ccc（yyy）ttt";
+
+    ui->textEdit_Original->setText(QString::fromStdWString(text));
+
+
+
     wstring prevtext;
     map<int,wstring> kakkos;
 
@@ -251,6 +455,7 @@ void MainWindow::on_action_PasteArticle_triggered()
 //    text = stdRegexReplace(text, wregex(L"\\[\\d+\\]"), func);
     wregex regexSeparator = getRegex(separatorBegin, separatorEnd);
     text = stdRegexReplace(text, regexSeparator, funcRenumber);
+    text = modifyLawText(text);
     text = stdRegexReplace(text, regexSeparator, funcItalic);
     QString uiText;
     uiText += QString::fromStdWString(text);
@@ -277,12 +482,25 @@ void MainWindow::on_action_PasteArticle_triggered()
     {
         if(kakkos.end() == kakkos.find(i))
             break;
-        wstring text = kakkos[i];
+
         uiText += QString("<i>") + "[" + QString::number(i) + "]</i> ";
-        text = stdRegexReplace(text, regexSeparator, funcItalic);
-        uiText += QString::fromStdWString(text);
+
+        wstring t = kakkos[i];
+        t = modifyLawText(t);
+        t = stdRegexReplace(t, regexSeparator, funcItalic);
+        uiText += QString::fromStdWString(t);
         uiText += "<br/>";
     }
     ui->textEditMain->setHtml(uiText);
     //Alert(this, QString::fromStdWString(text));
+}
+
+void MainWindow::on_action_AD_triggered(bool checked)
+{
+    doPaste(ui->textEdit_Original->toPlainText());
+}
+
+void MainWindow::on_action_Jo_To_Num_triggered(bool checked)
+{
+    doPaste(ui->textEdit_Original->toPlainText());
 }
