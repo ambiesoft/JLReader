@@ -1,0 +1,67 @@
+{
+    "name": "JLReader",
+	"builtexes": [
+		"release/JLReader.exe"
+	],
+	"copyplugins": [
+	],
+	"copytranslations":[
+		"qtxmlpatterns_ja.qm",
+		"assistant_ja.qm",
+		"designer_ja.qm",
+		"linguist_ja.qm",
+		"qt_help_ja.qm",
+		"qt_ja.qm",
+		"qtbase_ja.qm",
+		"qtdeclarative_ja.qm",
+		"qtmultimedia_ja.qm",
+		"qtquickcontrols_ja.qm",
+		"qtscript_ja.qm",
+		"qtserialport_ja.qm",
+		"qtwebsockets_ja.qm"
+	],
+	
+    "ShouldBeFiles": [
+        "JLReader.exe",
+        "D3Dcompiler_47.dll",
+        "history.txt",
+        "libEGL.dll",
+        "libgcc_s_dw2-1.dll",
+        "libGLESV2.dll",
+        "libstdc++-6.dll",
+        "libwinpthread-1.dll",
+        "LICENSE",
+        "opengl32sw.dll",
+        "Qt5Core.dll",
+        "Qt5Gui.dll",
+        "Qt5Svg.dll",
+        "Qt5Widgets.dll",
+        "Qt5Xml.dll",
+        "README.jp.md",
+        "README.md",
+        "platforms\\qwindows.dll",
+        "translations\\assistant_ja.qm",
+        "translations\\designer_ja.qm",
+        "translations\\linguist_ja.qm",
+        "translations\\qtbase_ja.qm",
+        "translations\\qtdeclarative_ja.qm",
+        "translations\\qtmultimedia_ja.qm",
+        "translations\\qtquickcontrols_ja.qm",
+        "translations\\qtscript_ja.qm",
+        "translations\\qtserialport_ja.qm",
+        "translations\\qtwebsockets_ja.qm",
+        "translations\\qtxmlpatterns_ja.qm",
+        "translations\\qt_help_ja.qm",
+        "translations\\qt_ja.qm"
+    ],
+    "TotalFileCount": "exact",
+    "archivedir": "C:\\Linkout",
+    "remotedir": "http://ambiesoft.mooo.com/ffdav/uploads/JLReader/",
+    "remotesha1": "http://ambiesoft.mooo.com/ffdav/uploads/getSha1.php?file=JLReader/{}",
+    "ShouldNotBeFiles": [
+    	"folder.ini"
+    ],
+    "ShouldBeOneOfThem": [],
+    "obtainverfrom": "History.txt",
+    "obtainverregex": "\\d+\\.\\d+\\.\\d+"
+}
