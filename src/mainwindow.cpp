@@ -3,7 +3,7 @@
 #include <sstream>
 
 #include <QDir>
-#include <QtXML>
+#include <QtXml>
 #include <QClipboard>
 
 #include "../../lsMisc/stdQt/stdQt.h"
@@ -497,10 +497,12 @@ void MainWindow::doPaste(const QString& originalText)
 
 void MainWindow::on_action_AD_triggered(bool checked)
 {
+    Q_UNUSED(checked)
     doPaste(ui->textEdit_Original->toPlainText());
 }
 
 void MainWindow::on_action_Jo_To_Num_triggered(bool checked)
 {
+    Q_UNUSED(checked)
     doPaste(ui->textEdit_Original->toPlainText());
 }
