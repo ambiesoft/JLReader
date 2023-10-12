@@ -82,45 +82,6 @@ wstring getPostu(int count)
     return ret;
 }
 
-void getSeparatorString(const wstring& text, wstring* begin, wstring* end,
-                        const wstring& kakkoStart, const wstring& kakkoEnd)
-{
-    wstring retBegin(kakkoStart);
-    wstring retEnd(kakkoEnd);
-    do
-    {
-        if(wstring::npos == text.find(retBegin) &&
-                wstring::npos == text.find(retEnd))
-        {
-            *begin=retBegin;
-            *end=retEnd;
-            return;
-        }
-        retBegin += L"[";
-        retEnd += L"]";
-    } while(true);
-    Q_ASSERT(false);
-}
-
-//std::wstring regex_replace(
-//    const std::wstring& input,
-//    const std::wregex& regex,
-//    std::function<std::wstring(std::wsmatch const& match)> format)
-//{
-//    std::wostringstream output;
-//    std::wsregex_iterator begin(input.begin(), input.end(), regex), end;
-//    wsregex_iterator::difference_type lastPos = 0;
-//    for(; begin != end; begin++)
-//    {
-//        output << begin->prefix() << format(*begin);
-//        qDebug() << output.str();
-//        lastPos = begin->position() + begin->length();
-//    }
-//    // output << input.substr(input.size() - begin->position());
-//    output << input.substr(lastPos);
-//    qDebug() << output.str();
-//    return output.str();
-//}
 
 int getNumber(const wstring& s)
 {
@@ -341,21 +302,37 @@ wstring MainWindow::modifyLawText(const wstring& text)
 void MainWindow::doPaste(const QString& originalText)
 {
     wstring text = originalText.toStdWString();
-    // wstring text = L"aaa（bbb（yyy）zzz）ccc";
-    // wstring text = L"aaa（zzz）ccc（yyy）ttt";
 
-    ui->textEdit_Original->setText(QString::fromStdWString(text));
-
-
+    // ui->textEdit_Original->setText(QString::fromStdWString(text));
 
     wstring prevtext;
     map<int,wstring> kakkos;
 
+    auto fnGetSeparatorString = [](const wstring& text, wstring* begin, wstring* end,
+                                   const wstring& kakkoStart, const wstring& kakkoEnd)
+    {
+        wstring retBegin(kakkoStart);
+        wstring retEnd(kakkoEnd);
+        do
+        {
+            if(wstring::npos == text.find(retBegin) &&
+                wstring::npos == text.find(retEnd))
+            {
+                *begin=retBegin;
+                *end=retEnd;
+                return;
+            }
+            retBegin += L"[";
+            retEnd += L"]";
+        } while(true);
+        Q_ASSERT(false);
+    };
+
     wstring separatorBegin,separatorEnd;
-    getSeparatorString(text, &separatorBegin, &separatorEnd,
+    fnGetSeparatorString(text, &separatorBegin, &separatorEnd,
                        L"[", L"]");
     wstring separatorForReplaceBegin,separatorForReplaceEnd;
-    getSeparatorString(text, &separatorForReplaceBegin, &separatorForReplaceEnd,
+    fnGetSeparatorString(text, &separatorForReplaceBegin, &separatorForReplaceEnd,
                        L"<", L">");
 
     int maxkakkokaishi = count(text.begin(),text.end(),L'）');
@@ -393,7 +370,7 @@ void MainWindow::doPaste(const QString& originalText)
 
     int writeIndex=1;
 
-    function<wstring(const wsmatch & match)> funcRenumber = [&](const wsmatch& match) {
+    function<wstring(const wsmatch & match)> fnRenumber = [&](const wsmatch& match) {
         int previ = getNumber(match.str());
         int newi = writeIndex++;
         {
@@ -429,12 +406,12 @@ void MainWindow::doPaste(const QString& originalText)
         return separatorBegin + to_wstring(newi) + separatorEnd;
     };
 
-    function<wstring(const wsmatch & match)> funcItalic = [&](const wsmatch& match) {
+    function<wstring(const wsmatch & match)> fnItalic = [&](const wsmatch& match) {
         return wstring(L"<i>") + match.str() + L"</i>";
     };
 
     // create function to get kakko
-    function<wregex(const wstring& start, const wstring& end)> getRegex = [&](const wstring& start, const wstring& end) {
+    function<wregex(const wstring& start, const wstring& end)> fnGetRegex = [&](const wstring& start, const wstring& end) {
         wstring retStart;
         for(auto&& c : start) {
             if(c==L'[' || c==L']') {
@@ -453,10 +430,10 @@ void MainWindow::doPaste(const QString& originalText)
     };
 
 //    text = stdRegexReplace(text, wregex(L"\\[\\d+\\]"), func);
-    wregex regexSeparator = getRegex(separatorBegin, separatorEnd);
-    text = stdRegexReplace(text, regexSeparator, funcRenumber);
+    wregex regexSeparator = fnGetRegex(separatorBegin, separatorEnd);
+    text = stdRegexReplace(text, regexSeparator, fnRenumber);
     text = modifyLawText(text);
-    text = stdRegexReplace(text, regexSeparator, funcItalic);
+    text = stdRegexReplace(text, regexSeparator, fnItalic);
     QString uiText;
     uiText += QString::fromStdWString(text);
     uiText += "<br/><br/>";
@@ -473,7 +450,7 @@ void MainWindow::doPaste(const QString& originalText)
                 break;
             }
             wstring text = kakkos[i];
-            stdRegexReplace(text, regexSeparator, funcRenumber);
+            stdRegexReplace(text, regexSeparator, fnRenumber);
         }
     } while(!doneKakkoModify);
 
@@ -487,7 +464,7 @@ void MainWindow::doPaste(const QString& originalText)
 
         wstring t = kakkos[i];
         t = modifyLawText(t);
-        t = stdRegexReplace(t, regexSeparator, funcItalic);
+        t = stdRegexReplace(t, regexSeparator, fnItalic);
         uiText += QString::fromStdWString(t);
         uiText += "<br/>";
     }
