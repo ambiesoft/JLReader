@@ -33,10 +33,12 @@ HEADERS += \
 
 win32 {
     HEADERS += \
-            ../../lsMisc/GetLastErrorString.h
+            ../../lsMisc/GetLastErrorString.h \
+            ../../lsMisc/OpenCommon.h
     SOURCES += ../../lsMisc/stdQt/stdQt_win32.cpp \
             ../../lsMisc/GetLastErrorString.cpp \
-            ../../lsMisc/stdosd/stdosd_win.cpp
+            ../../lsMisc/stdosd/stdosd_win.cpp \
+            ../../lsMisc/OpenCommon.cpp
 
     win32-g++ {
         message("win32-g++")
